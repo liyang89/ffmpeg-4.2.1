@@ -132,7 +132,8 @@ typedef struct PacketQueue {
 #define FRAME_QUEUE_SIZE FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
 
 typedef struct AudioParams {
-    int freq;
+/**/
+    int freq; // sample_rate 采样率
     int channels;
     int64_t channel_layout;
     enum AVSampleFormat fmt;
@@ -588,6 +589,9 @@ static void decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, 
 }
 
 static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
+/*
+如果pkt是连续的，则直接解码，如果不是连续的，那就从pkt的队列中取出数据，送到解码器中，for循环结束一次，然后当pkt是连续的时候，那就开始解码
+*/
     int ret = AVERROR(EAGAIN);
 
     for (;;) {
@@ -744,6 +748,9 @@ static Frame *frame_queue_peek_last(FrameQueue *f)
 
 static Frame *frame_queue_peek_writable(FrameQueue *f)
 {
+/*
+检测队列是否可写
+*/
     /* wait until we have space to put a new frame */
     SDL_LockMutex(f->mutex);
     while (f->size >= f->max_size &&
@@ -760,6 +767,9 @@ static Frame *frame_queue_peek_writable(FrameQueue *f)
 
 static Frame *frame_queue_peek_readable(FrameQueue *f)
 {
+/*
+获取可读的frame队列中的队头frame
+*/
     /* wait until we have a readable a new frame */
     SDL_LockMutex(f->mutex);
     while (f->size - f->rindex_shown <= 0 &&
@@ -786,6 +796,7 @@ static void frame_queue_push(FrameQueue *f)
 
 static void frame_queue_next(FrameQueue *f)
 {
+/*更新FrameQueue队列中的队首下标*/
     if (f->keep_last && !f->rindex_shown) {
         f->rindex_shown = 1;
         return;
@@ -1420,6 +1431,9 @@ static void sync_clock_to_slave(Clock *c, Clock *slave)
 }
 
 static int get_master_sync_type(VideoState *is) {
+/*
+获取音视频同步的方式
+*/
     if (is->av_sync_type == AV_SYNC_VIDEO_MASTER) {
         if (is->video_st)
             return AV_SYNC_VIDEO_MASTER;
@@ -2329,13 +2343,17 @@ static int synchronize_audio(VideoState *is, int nb_samples)
  */
 static int audio_decode_frame(VideoState *is)
 {
+/*
+音频重采样在 audio_decode_frame() 中实现， audio_decode_frame() 就是从⾳频frame队列中 取出⼀个frame，按指定格式经过重采样后输出
+*/
+
     int data_size, resampled_data_size;
     int64_t dec_channel_layout;
     av_unused double audio_clock0;
     int wanted_nb_samples;
     Frame *af;
 
-    if (is->paused)
+    if (is->paused)//暂停状态，返回-1，sdl_audio_callback会处理为输出静音
         return -1;
 
     do {
@@ -2346,20 +2364,21 @@ static int audio_decode_frame(VideoState *is)
             av_usleep (1000);
         }
 #endif
-        if (!(af = frame_queue_peek_readable(&is->sampq)))
+        if (!(af = frame_queue_peek_readable(&is->sampq))) //从sampq取帧，必要时丢帧
             return -1;
         frame_queue_next(&is->sampq);
     } while (af->serial != is->audioq.serial);
 
     data_size = av_samples_get_buffer_size(NULL, af->frame->channels,
                                            af->frame->nb_samples,
-                                           af->frame->format, 1);
+                                           af->frame->format, 1);//计算这⼀帧的字节数
 
     dec_channel_layout =
         (af->frame->channel_layout && af->frame->channels == av_get_channel_layout_nb_channels(af->frame->channel_layout)) ?
         af->frame->channel_layout : av_get_default_channel_layout(af->frame->channels);
     wanted_nb_samples = synchronize_audio(is, af->frame->nb_samples);
 
+    //判断是否需要重新初始化重采样
     if (af->frame->format        != is->audio_src.fmt            ||
         dec_channel_layout       != is->audio_src.channel_layout ||
         af->frame->sample_rate   != is->audio_src.freq           ||
@@ -2416,7 +2435,7 @@ static int audio_decode_frame(VideoState *is)
         is->audio_buf = is->audio_buf1;
         resampled_data_size = len2 * is->audio_tgt.channels * av_get_bytes_per_sample(is->audio_tgt.fmt);
     } else {
-        is->audio_buf = af->frame->data[0];
+        is->audio_buf = af->frame->data[0]; //VideoState中的数据指针指向frame中的data数据中
         resampled_data_size = data_size;
     }
 
@@ -2559,6 +2578,9 @@ static int audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb
 /* open a given stream. Return 0 if OK */
 static int stream_component_open(VideoState *is, int stream_index)
 {
+/*
+打开视频、音频解码器。在此会打开相应解码器，并创建相应的解码线程
+*/
     AVFormatContext *ic = is->ic;
     AVCodecContext *avctx;
     AVCodec *codec;
@@ -2744,7 +2766,7 @@ static int read_thread(void *arg)
     VideoState *is = arg;
     AVFormatContext *ic = NULL;
     int err, i, ret;
-    int st_index[AVMEDIA_TYPE_NB];
+    int st_index[AVMEDIA_TYPE_NB]; //以解码器类型做为下标，存储标识的stream
     AVPacket pkt1, *pkt = &pkt1;
     int64_t stream_start_time;
     int pkt_in_play_range = 0;

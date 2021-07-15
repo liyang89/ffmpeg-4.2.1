@@ -2242,7 +2242,7 @@ typedef struct AVCodecContext {
      *   frame size is not restricted.
      * - decoding: may be set by some decoders to indicate constant frame size
      */
-    int frame_size; // 音频帧中每个声道的采样数
+    int frame_size; // 单通道每个编码单元的采样数。多少个点为一个编码单元
 
     /**
      * Frame counter, set by libavcodec.
@@ -5107,13 +5107,16 @@ enum AVPictureStructure {
 };
 
 typedef struct AVCodecParserContext {
-    void *priv_data;
-    struct AVCodecParser *parser;
-    int64_t frame_offset; /* offset of the current frame */
-    int64_t cur_offset; /* current offset
-                           (incremented by each av_parser_parse()) */
-    int64_t next_frame_offset; /* offset of the next frame */
-    /* video info */
+/*
+解析器上下文
+*/
+    void *priv_data; //有数据（需要分配空间）
+    struct AVCodecParser *parser; //解析器
+    int64_t frame_offset; /* offset of the current frame 当前帧的偏移量*/
+    int64_t cur_offset; /* current offset   
+                           (incremented by each av_parser_parse()) 当前偏移(使用av_parser_parse()执行递增)*/
+    int64_t next_frame_offset; /* offset of the next frame 下一帧的偏移量*/
+    /* video info 视频信息*/
     int pict_type; /* XXX: Put it back in AVCodecContext. */
     /**
      * This field is used for proper frame duration computation in lavf.
@@ -5125,13 +5128,13 @@ typedef struct AVCodecParserContext {
      * It is used by codecs like H.264 to display telecined material.
      */
     int repeat_pict; /* XXX: Put it back in AVCodecContext. */
-    int64_t pts;     /* pts of the current frame */
-    int64_t dts;     /* dts of the current frame */
+    int64_t pts;     /* pts of the current frame 当前帧的PTS*/
+    int64_t dts;     /* dts of the current frame 当前帧的DTS*/
 
     /* private data */
-    int64_t last_pts;
-    int64_t last_dts;
-    int fetch_timestamp;
+    int64_t last_pts; //最近一次的PTS数值
+    int64_t last_dts; //最近一次的DTS数值
+    int fetch_timestamp; //即时取帧
 
 #define AV_PARSER_PTS_NB 4
     int cur_frame_start_index;
@@ -5146,7 +5149,7 @@ typedef struct AVCodecParserContext {
 #define PARSER_FLAG_FETCHED_OFFSET            0x0004
 #define PARSER_FLAG_USE_CODEC_TS              0x1000
 
-    int64_t offset;      ///< byte offset from starting packet start
+    int64_t offset;      ///< byte offset from starting packet start起始包的数据偏移量
     int64_t cur_frame_end[AV_PARSER_PTS_NB];
 
     /**
@@ -5155,7 +5158,7 @@ typedef struct AVCodecParserContext {
      * old-style fallback using AV_PICTURE_TYPE_I picture type as key frames
      * will be used.
      */
-    int key_frame;
+    int key_frame; //设置为1表示关键帧，设置为0表示非关键帧初始化时是-1,假如解析器不设置这个值,那就默认视为关键帧来使用
 
 #if FF_API_CONVERGENCE_DURATION
     /**
@@ -5175,7 +5178,7 @@ typedef struct AVCodecParserContext {
      * For example, this corresponds to presence of H.264 buffering period
      * SEI message.
      */
-    int dts_sync_point;
+    int dts_sync_point;  // 时间戳生成支持:时间戳生成的同步点，以数值>0来设置同步点,0表示非同步点,<0表示未定义
 
     /**
      * Offset of the current timestamp against last timestamp sync point in
@@ -5204,31 +5207,37 @@ typedef struct AVCodecParserContext {
      *
      * For example, this corresponds to H.264 dpb_output_delay.
      */
-    int pts_dts_delta;
+    int pts_dts_delta;        // 对应AVCodecContext.time_base的当前帧延迟
+							  // 设置为INT_MIN当dts_sync_point没有被使用时
+							  // 否则, 它必须包含有效的非负时间戳（帧的呈现时间不能在过去）,此延迟表示帧的解码和呈现时间之间的误差
+							  // 例如,对应H.264的dpb_output_delay
 
     /**
      * Position of the packet in file.
      *
      * Analogous to cur_frame_pts/dts
      */
-    int64_t cur_frame_pos[AV_PARSER_PTS_NB];
+    int64_t cur_frame_pos[AV_PARSER_PTS_NB];  // 数据包在文件中的位置
+	                                         // 类似于cur_frame_pts/dts
 
     /**
      * Byte position of currently parsed frame in stream.
      */
-    int64_t pos;
+    int64_t pos; // 流中当前解析帧的字节位置
 
     /**
      * Previous frame byte position.
      */
-    int64_t last_pos;
+    int64_t last_pos;  // 前一帧的字节位置
 
     /**
      * Duration of the current frame.
      * For audio, this is in units of 1 / AVCodecContext.sample_rate.
      * For all other types, this is in units of AVCodecContext.time_base.
      */
-    int duration;
+    int duration;  // 当前帧的持续时间
+	               // 音频: 这是一个单位 / AVCodecContext.sample_rate.（音频采样率）
+	               // 对于音频之外的媒体: 这是AVCodecContext.time_base的但单位
 
     enum AVFieldOrder field_order;
 
@@ -5248,18 +5257,20 @@ typedef struct AVCodecParserContext {
      *
      * For example, this corresponds to H.264 PicOrderCnt.
      */
-    int output_picture_number;
+    int output_picture_number;   // 显示或输出顺序增加的图像帧号
+	                             // 这个字段可以初始化在新队列的第一张照片
+	                            // 例如,对应了H.264的PicOrderCnt字段.
 
     /**
      * Dimensions of the decoded video intended for presentation.
      */
-    int width;
+    int width;   // 用于演示的解码视频的尺寸
     int height;
 
     /**
      * Dimensions of the coded video.
      */
-    int coded_width;
+    int coded_width;     //解码后的视频尺寸
     int coded_height;
 
     /**
@@ -5270,7 +5281,9 @@ typedef struct AVCodecParserContext {
      * decodes the data, so the format reported here might be different from the
      * one returned by a decoder.
      */
-    int format;
+    int format;   // 解码数据格式
+	             // 对应了视频的枚举类型AVPixelFormat和音频的枚举类型AVSampleFormat
+	            // 要注意,解码器可以有相当大的自由度来决定如何精确的解码数据, 因此这里写入的格式类型, 不代表实际解码器返回的媒体类型 
 } AVCodecParserContext;
 
 typedef struct AVCodecParser {

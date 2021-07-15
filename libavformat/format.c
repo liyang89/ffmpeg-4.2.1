@@ -215,6 +215,13 @@ ff_const59 AVInputFormat *av_probe_input_format2(ff_const59 AVProbeData *pd, int
 
 ff_const59 AVInputFormat *av_probe_input_format(ff_const59 AVProbeData *pd, int is_opened)
 {
+	/*
+	用于根据输入数据查找合适的AVInputFormat
+	pd：存储输入数据信息的AVProbeData结构体。
+is_opened：文件是否打开。
+score_max：判决AVInputFormat的门限值。只有某格式判决分数大于该门限值的时候，函数才会返回该封装格式，否则返回NULL。
+	*/
+
     int score = 0;
     return av_probe_input_format2(pd, is_opened, &score);
 }

@@ -2136,6 +2136,9 @@ AVDictionary *filter_codec_opts(AVDictionary *opts, enum AVCodecID codec_id,
 AVDictionary **setup_find_stream_info_opts(AVFormatContext *s,
                                            AVDictionary *codec_opts)
 {
+/*
+得到一个AVDictionary，用来设置avformat_find_stream_info函数的参数
+*/
     int i;
     AVDictionary **opts;
 

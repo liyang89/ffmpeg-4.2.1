@@ -159,6 +159,35 @@ enum AVIODataMarkerType {
  *       function pointers specified in avio_alloc_context()
  */
 typedef struct AVIOContext {
+/*
+    unsigned char *buffer;  // buffer起始地址
+    int buffer_size;        // 可以读取或者写入的最大的buffer size
+    unsigned char *buf_ptr; // 当前正在读或写操作的buffer地址
+    unsigned char *buf_end; // 数据结束的buffer地址，如果读取函数返回的数据小于请求数据，buf_end可能小于buffer + buffer_size
+    void *opaque;  // 一个私有指针，传递给read / write / seek / 等函数
+    int (*read_packet)(void *opaque, uint8_t *buf, int buf_size); // 读取音视频数据的函数。
+    int (*write_packet)(void *opaque, uint8_t *buf, int buf_size); // 写入音视频数据的函数
+    int64_t (*seek)(void *opaque, int64_t offset, int whence);
+    int64_t pos; // 当前buffer在文件中的位置
+    int must_flush; // 如果下一个seek应该刷新，则为true
+    int eof_reached; // 如果到达eof(end of file 文件尾)，则为true
+    int write_flag; // 如果开放写，则为true
+    int (*read_pause)(void *opaque, int pause); // 暂停或恢复网络流媒体协议的播放
+    int64_t (*read_seek)(void *opaque, int stream_index,
+                         int64_t timestamp, int flags); // 快进到指定timestamp
+    int seekable; // 如果为0，表示不可seek操作。其它值查看AVIO_SEEKABLE_XXX
+    int64_t maxsize; // max filesize，用于限制分配空间大小
+    int direct; // avio_seek是否直接调用底层的seek功能。
+    int64_t bytes_read; // 字节读取统计数据
+    int seek_count; // seek计数
+    int writeout_count; // 写入次数统计
+    int orig_buffer_size; // 原始buffer大小
+    const char *protocol_whitelist; // 允许协议白名单，以','分隔
+    const char *protocol_blacklist; // 不允许的协议黑名单，以','分隔
+		// 用于替换write_packet的回调函数。
+    int (*write_data_type)(void *opaque, uint8_t *buf, int buf_size,
+                           enum AVIODataMarkerType type, int64_t time);
+*/
     /**
      * A class for private options.
      *

@@ -153,7 +153,7 @@ int avcodec_get_context_defaults3(AVCodecContext *s, const AVCodec *codec)
 }
 #endif
 
-AVCodecContext *avcodec_alloc_context3(const AVCodec *codec)
+AVCodecContext *avcodec_alloc_context3(const AVCodec *codec)  //根据AVcodec类型（音频还是视频）分配一个默认的AVCodecContext对象
 {
     AVCodecContext *avctx= av_malloc(sizeof(AVCodecContext));
 

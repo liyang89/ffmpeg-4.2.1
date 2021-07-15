@@ -383,7 +383,7 @@ AVDictionary *metadata;元数据
     /**
      * number of audio samples (per channel) described by this frame
      */
-    int nb_samples; //由该帧描述的音频样本的数目（每个通道）
+    int nb_samples; //音频每通道采样数
 
     /**
      * format of the frame, -1 if unknown or unset
@@ -489,7 +489,7 @@ AVDictionary *metadata;元数据
     /**
      * Sample rate of the audio data.
      */
-    int sample_rate;
+    int sample_rate;  //音频采样率
 
     /**
      * Channel layout of the audio data.

@@ -93,6 +93,7 @@ extern struct Resampler const swri_resampler;
 extern struct Resampler const swri_soxr_resampler;
 
 struct SwrContext {
+/重采样器/
     const AVClass *av_class;                        ///< AVClass used for AVOption and av_log()
     int log_level_offset;                           ///< logging level offset
     void *log_ctx;                                  ///< parent logging context

@@ -90,7 +90,7 @@ int ffio_init_context(AVIOContext *s,
     memset(s, 0, sizeof(AVIOContext));
 
     s->buffer      = buffer;
-    s->orig_buffer_size =
+    s->orig_buffer_size = 
     s->buffer_size = buffer_size;
     s->buf_ptr     = buffer;
     s->buf_ptr_max = buffer;

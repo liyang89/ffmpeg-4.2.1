@@ -541,6 +541,15 @@ int attribute_align_arg ff_codec_open2_recursive(AVCodecContext *avctx, const AV
 
 int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *codec, AVDictionary **options)
 {
+/*
+使用编解码器初始化一个视音频编解码器的AVCodecContext
+
+1、检测指定的codec和context里面的codec是否匹配。
+2、分配空间。
+3、检测codec各个参数合法性，并给某些字段赋初值。
+4、调用codec的init初始化codec。
+5、释放资源，返回。
+*/
     int ret = 0;
     int codec_init_ok = 0;
     AVDictionary *tmp = NULL;
@@ -2096,6 +2105,9 @@ int avcodec_parameters_from_context(AVCodecParameters *par,
 int avcodec_parameters_to_context(AVCodecContext *codec,
                                   const AVCodecParameters *par)
 {
+/*
+将AVCodecParameters结构体中码流参数拷贝到AVCodecContext结构体中，并且重新拷贝一份extradata内容。
+*/
     codec->codec_type = par->codec_type;
     codec->codec_id   = par->codec_id;
     codec->codec_tag  = par->codec_tag;
@@ -2138,7 +2150,7 @@ int avcodec_parameters_to_context(AVCodecContext *codec,
         break;
     }
 
-    if (par->extradata) {
+    if (par->extradata) { 
         av_freep(&codec->extradata);
         codec->extradata = av_mallocz(par->extradata_size + AV_INPUT_BUFFER_PADDING_SIZE);
         if (!codec->extradata)

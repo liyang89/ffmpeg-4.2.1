@@ -219,10 +219,16 @@ void av_get_channel_layout_string(char *buf, int buf_size,
 
 int av_get_channel_layout_nb_channels(uint64_t channel_layout)
 {
+/*
+    根据通道的layout返回通道的个数
+*/
     return av_popcount64(channel_layout);
 }
 
 int64_t av_get_default_channel_layout(int nb_channels) {
+/*
+    根据通道的个数返回默认的layout
+*/
     int i;
     for (i = 0; i < FF_ARRAY_ELEMS(channel_layout_map); i++)
         if (nb_channels == channel_layout_map[i].nb_channels)

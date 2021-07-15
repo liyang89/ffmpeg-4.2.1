@@ -642,14 +642,14 @@ typedef struct AVInputFormat {
      * A comma separated list of short names for the format. New names
      * may be appended with a minor bump.
      */
-    const char *name;
+    const char *name; //格式名列表.也可以分配一个新名字
 
     /**
      * Descriptive name for the format, meant to be more human-readable
      * than name. You should use the NULL_IF_CONFIG_SMALL() macro
      * to define it.
      */
-    const char *long_name;
+    const char *long_name; //格式的描述性名称，意味着比名称更易于阅读
 
     /**
      * Can use flags: AVFMT_NOFILE, AVFMT_NEEDNUMBER, AVFMT_SHOW_IDS,
@@ -663,18 +663,18 @@ typedef struct AVInputFormat {
      * usually not use extension format guessing because it is not
      * reliable enough
      */
-    const char *extensions;
+    const char *extensions;  //文件扩展名
 
-    const struct AVCodecTag * const *codec_tag;
+    const struct AVCodecTag * const *codec_tag; //
 
-    const AVClass *priv_class; ///< AVClass for the private context
+    const AVClass *priv_class; ///< AVClass for the private context  //一个模拟类型列表.用来在probe的时候check匹配的类型
 
     /**
      * Comma-separated list of mime types.
      * It is used check for matching mime types while probing.
      * @see av_probe_input_format2
      */
-    const char *mime_type;
+    const char *mime_type; 
 
     /*****************************************************************
      * No fields below this line are part of the public API. They
@@ -683,7 +683,7 @@ typedef struct AVInputFormat {
      * New public fields should be added right above.
      *****************************************************************
      */
-    ff_const59 struct AVInputFormat *next;
+    ff_const59 struct AVInputFormat *next; //用于把所有支持的输入文件容器格式连接成链表，便于遍历查找
 
     /**
      * Raw demuxers store their codec ID here.
@@ -693,7 +693,7 @@ typedef struct AVInputFormat {
     /**
      * Size of private data so that it can be allocated in the wrapper.
      */
-    int priv_data_size;
+    int priv_data_size; //标示具体的文件容器格式对应的Context 的大小
 
     /**
      * Tell if a given file has a chance of being parsed as this format.
@@ -978,7 +978,7 @@ AVRational display_aspect_ratio; 显示的宽高比
      *             avformat_find_stream_info().
      * - muxing: May be set by the caller before avformat_write_header().
      */
-    AVRational avg_frame_rate; //帧率
+    AVRational avg_frame_rate; //平均帧率
 
     /**
      * For streams with AV_DISPOSITION_ATTACHED_PIC disposition, this packet
@@ -1029,7 +1029,7 @@ AVRational display_aspect_ratio; 显示的宽高比
      * For example, if the time base is 1/90000 and all frames have either
      * approximately 3600 or 1800 timer ticks, then r_frame_rate will be 50/1.
      */
-    AVRational r_frame_rate;
+    AVRational r_frame_rate;  //实际帧率
 
 #if FF_API_LAVF_FFSERVER
     /**

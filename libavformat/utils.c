@@ -419,6 +419,12 @@ int av_demuxer_open(AVFormatContext *ic) {
 static int init_input(AVFormatContext *s, const char *filename,
                       AVDictionary **options)
 {
+/*
+打开输入的视频数据并且探测视频的格式,
+（1）当使用了自定义的AVIOContext的时候（AVFormatContext中的AVIOContext不为空，即s->pb!=NULL），如果指定了AVInputFormat就直接返回，如果没有指定就调用av_probe_input_buffer2()推测AVInputFormat。这一情况出现的不算很多，但是当我们从内存中读取数据的时候（需要初始化自定义的AVIOContext），就会执行这一步骤。
+（2）在更一般的情况下，如果已经指定了AVInputFormat，就直接返回；如果没有指定AVInputFormat，就调用av_probe_input_format(NULL,…)根据文件路径判断文件格式。这里特意把av_probe_input_format()的第1个参数写成“NULL”，是为了强调这个时候实际上并没有给函数提供输入数据，此时仅仅通过文件路径推测AVInputFormat。
+（3）如果发现通过文件路径判断不出来文件格式，那么就需要打开文件探测文件格式了，这个时候会首先调用avio_open2()打开文件，然后调用av_probe_input_buffer2()推测AVInputFormat
+*/
     int ret;
     AVProbeData pd = { filename, NULL, 0 };
     int score = AVPROBE_SCORE_RETRY;
@@ -536,16 +542,18 @@ FF_ENABLE_DEPRECATION_WARNINGS
     return 0;
 }
 
+
+int avformat_open_input(AVFormatContext **ps, const char *filename,
+                        ff_const59 AVInputFormat *fmt, AVDictionary **options)
+{
 /*
 AVFormatContext **ps：指向用户提供的结构体，一般可以将这个参数定义指向空然后传递到函数中，这样avformat_open_input函数将会分配这个结构体的内存空间并初始化
 const char *filename：打开视频文件的文件名
 AVInputFormat *fmt：如果这个参数不为空，则指定固定的输入格式，否则自动检测输入格式；一般设为空即可
 AVDictionary **options：由AVFormatContext和demuxer-private options组成的字典结构，可设为空
-
+avformat_open_input的主要主要就是根据输入的文件，创建AVFormatContext，根据文件的头格式，后缀找到合适的AVInputFormat，并初始化AVIOContext，完成读写协议，然后读取文件头。完成AVFormatContext的初始化
 */
-int avformat_open_input(AVFormatContext **ps, const char *filename,
-                        ff_const59 AVInputFormat *fmt, AVDictionary **options)
-{
+
     AVFormatContext *s = *ps;
     int i, ret = 0;
     AVDictionary *tmp = NULL;
@@ -5091,6 +5099,7 @@ AVRational av_guess_sample_aspect_ratio(AVFormatContext *format, AVStream *strea
 
 AVRational av_guess_frame_rate(AVFormatContext *format, AVStream *st, AVFrame *frame)
 {
+//得到的是实际帧率还是平均帧率（猜测视频帧率）
     AVRational fr = st->r_frame_rate;
     AVRational codec_fr = st->internal->avctx->framerate;
     AVRational   avg_fr = st->avg_frame_rate;
